@@ -1,0 +1,22 @@
+[
+  {
+    "task_id": "BE1",
+    "category": "BE",
+    "description": "Add an Express endpoint POST /api/inventory/adjust that accepts { sku, delta, reason } and updates the stock level for the given SKU, rejecting requests that would drop stock below zero with a 400 response.",
+    "context_files": ["src/routes/inventory.ts", "src/models/InventoryItem.ts"],
+    "target_file": "src/routes/inventory.ts",
+    "test_command": "npx jest tests/inventory-adjust.test.ts",
+    "security_scan_command": "semgrep --config=auto src/routes/inventory.ts",
+    "language": "typescript"
+  },
+  {
+    "task_id": "PY1",
+    "category": "PY",
+    "description": "Extend the forecasting module to expose a get_reorder_point(sku) function using the existing RandomForest model, returning an integer reorder threshold.",
+    "context_files": ["ml/forecast.py", "ml/model_store.py"],
+    "target_file": "ml/forecast.py",
+    "test_command": "pytest tests/test_forecast_reorder.py",
+    "security_scan_command": "bandit -r ml/forecast.py",
+    "language": "python"
+  }
+]
