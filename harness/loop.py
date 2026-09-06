@@ -8,11 +8,24 @@ Runs one (task, model) pair through either:
 Both modes share the same scoring so results are directly comparable.
 """
 
+import os
 import re
-from harness.config import MAX_TURNS_SINGLE, MAX_TURNS_AGENTIC
+from harness.config import MAX_TURNS_SINGLE, MAX_TURNS_AGENTIC, RESULTS_DIR
 from harness.sandbox import Sandbox
 from harness.scorer import score_attempt
 from harness.model_clients import ModelClient
+
+
+def save_generated_code(run_id: str, task, model_name: str, mode: str, turn: int, code: str):
+    """Persist each turn's generated code so it can be reviewed later --
+    cli_review.py's usability step assumes this is possible, but the sandbox
+    worktree it was written into is deleted as soon as run_task returns."""
+    out_dir = os.path.join(RESULTS_DIR, "generated", run_id)
+    os.makedirs(out_dir, exist_ok=True)
+    basename = os.path.basename(task.target_file)
+    out_path = os.path.join(out_dir, f"{task.task_id}__{model_name}__{mode}__turn{turn}__{basename}")
+    with open(out_path, "w") as f:
+        f.write(code)
 
 
 def extract_code_block(response_text: str) -> str:
@@ -58,6 +71,7 @@ def run_task(task, model_cfg, mode: str, run_id: str) -> list:
             reply = client.send(messages)
             code = extract_code_block(reply)
             sandbox.write_file(task.target_file, code)
+            save_generated_code(run_id, task, model_cfg.name, mode, turn, code)
 
             score = score_attempt(sandbox, task, model_cfg.name, turn, mode)
             scores.append(score)
