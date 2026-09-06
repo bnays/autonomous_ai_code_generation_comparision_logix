@@ -9,7 +9,7 @@ that wasn't from actual runs.
 ```bash
 pip install -r requirements.txt
 
-export OPENAI_API_KEY=...
+export OPENAI_API_KEY=
 export ANTHROPIC_API_KEY=...
 export GOOGLE_API_KEY=...
 export LOGIX_REPO_PATH=/path/to/a/clean/local/clone/of/logix
@@ -21,7 +21,7 @@ with no uncommitted changes, but it should NOT be your everyday working copy.
 
 ## 2. Replace the example tasks
 
-Edit `tasks.example.json` (or copy it to `tasks.json` and point
+Edit `tasks.json` (or copy it to `tasks.json` and point
 `TASKS_FILE` at it) with your real ~20 tasks: real target files, real test
 commands that exist in your repo, real security scan commands.
 

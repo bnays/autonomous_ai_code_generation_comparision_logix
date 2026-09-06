@@ -9,6 +9,8 @@ Scores one attempt against the five NIT6001 dimensions:
                            after reviewing the diff (see prompt_for_usability below).
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass, asdict
 from harness.sandbox import Sandbox
 

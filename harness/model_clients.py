@@ -44,7 +44,7 @@ class ModelClient:
             resp = self._client.chat.completions.create(
                 model=self.cfg.model_id,
                 messages=messages,
-                max_tokens=4096,
+                max_completion_tokens=4096,
             )
             return resp.choices[0].message.content
 

@@ -9,7 +9,7 @@ Usage:
 Before running:
   1. Set env vars: OPENAI_API_KEY, ANTHROPIC_API_KEY, GOOGLE_API_KEY
   2. Set LOGIX_REPO_PATH to a clean local clone of Logix
-  3. Replace tasks.example.json with your real 20-task set
+  3. Replace tasks.json with your real 20-task set
   4. pip install -r requirements.txt
 """
 

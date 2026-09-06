@@ -3,7 +3,7 @@ Loads task definitions from a JSON file.
 
 Each task describes one unit of the benchmark: what to ask the model for,
 which file(s) it should touch, how to test the result, and how to scan it.
-Replace tasks.example.json with your real 20-task Logix set.
+Replace tasks.json with your real 10-task Logix set.
 """
 
 import json

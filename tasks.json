@@ -1,0 +1,58 @@
+[
+    {
+        "task_id": "FE1",
+        "category": "FE",
+        "description": "In this Next.js 15 App Router inventory management dashboard, implement client/src/app/dashboard/page.tsx so that it fetches the dashboard summary from GET /dashboard/summary using the existing apiRequest helper (@/lib/api-client) on mount, shows a loading state until the data arrives, and then renders: KPI cards for Budget, TotalCustomers, TasksProgress, and TotalProfit (components already exist under client/src/components/dashboard/overview/); Sales and Traffic charts; and LatestProducts/LatestOrders tables. The response may omit recentProducts or recentTransactions — the page must not crash in that case (default to an empty list).",
+        "context_files": [
+            "client/src/lib/api-client.ts"
+        ],
+        "target_file": "client/src/app/dashboard/page.tsx",
+        "test_command": "cd client && npx jest src/app/dashboard/page.test.tsx",
+        "security_scan_command": null,
+        "language": "typescript"
+    },
+    {
+        "task_id": "BE1",
+        "category": "BE",
+        "description": "Implement Express middleware exports.protect = (roles = []) => (req, res, next) => {...} in backend/middleware/authMiddleware.js. It must read a Bearer token from the Authorization header, reject with 401 if the header is missing, if the token is malformed/garbage, if it was signed with a different secret than process.env.JWT_SECRET, or if it is expired. On a valid token, it must attach the decoded payload to req.user and call next(). If roles is a non-empty array, it must additionally reject with 403 when req.user's role is not included in roles, while still calling next() when it is (or when roles is empty, meaning no restriction).",
+        "context_files": [],
+        "target_file": "backend/middleware/authMiddleware.js",
+        "test_command": "cd backend && npx jest middleware/authMiddleware.test.js",
+        "security_scan_command": null,
+        "language": "typescript"
+    },
+    {
+        "task_id": "PY1",
+        "category": "PY",
+        "description": "Implement run_forecast(sku_input) in ai-module/forecast.py. It connects to MySQL (via mysql.connector, reading sale_date/quantity_sold from sales_history for the given, whitespace-trimmed SKU as a parameterized query), returns {'error': ...} if there is no historical data for that SKU or if the DB connection fails (never raises), and otherwise engineers lag/rolling-average features, trains a RandomForestRegressor(n_estimators=100, random_state=42), and produces a recursive 365-day forecast aggregated into daily (7 rows), weekly (<=4 rows), monthly (<=12 rows), and yearly (>=1 row) buckets, alongside sku, accuracy, and today fields.",
+        "context_files": [],
+        "target_file": "ai-module/forecast.py",
+        "test_command": "cd ai-module && ./venv/bin/python3.13 -m pytest test_forecast.py -v",
+        "security_scan_command": null,
+        "language": "python"
+    },
+    {
+        "task_id": "DB1",
+        "category": "DB",
+        "description": "Add exports.getProductsByFilter(req, res) to backend/controllers/inventoryController.js, intended for GET /api/inventory/filter. Read category_id, min_price, max_price, search, page (default 1), and limit (default 10) from req.query. Apply each provided filter with AND semantics (category_id exact match, min_price/max_price as inclusive bounds on unit_price, search as a wildcarded LIKE match against product name and SKU), paginate with LIMIT/OFFSET, and return { data: [...rows], meta: { totalItems, currentPage } }. Every filter value must be passed as a bound parameter to db.execute(sql, params); none may be concatenated or interpolated directly into the SQL string.",
+        "context_files": [
+            "backend/controllers/inventoryController.js"
+        ],
+        "target_file": "backend/controllers/inventoryController.js",
+        "test_command": "cd backend && npx jest controllers/productsFilter.test.js",
+        "security_scan_command": null,
+        "language": "typescript"
+    },
+    {
+        "task_id": "INT1",
+        "category": "INT",
+        "description": "Add exports.getCategoryForecast(req, res) to backend/controllers/forecastController.js, intended for GET /api/inventory/forecast/category/:category_id. Look up all products in the given category (SELECT sku, product_name FROM products WHERE category_id = ?, parameterized). If none match, return 200 with { category_id, data: [] } without spawning any forecast process. Otherwise, for each matching product, run the existing ai-module/forecast.py script the same way getProductForecast already does (spawn the venv's python3 on forecast.py <sku>, parse its JSON stdout), and return 200 with { category_id, data: [{ sku, product_name, forecast: {...} }, ...] }. If one product's forecast fails, that product's entry should carry { sku, product_name, error } instead without preventing other products' forecasts from succeeding. A database error on the category lookup itself should return 500.",
+        "context_files": [
+            "backend/controllers/forecastController.js"
+        ],
+        "target_file": "backend/controllers/forecastController.js",
+        "test_command": "cd backend && npx jest controllers/forecastController.test.js",
+        "security_scan_command": null,
+        "language": "typescript"
+    }
+]
