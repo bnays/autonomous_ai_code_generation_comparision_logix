@@ -1,0 +1,98 @@
+
+==============================================================================
+1. Correctness (all 5 tasks)  (DV = passed_tests_num)
+==============================================================================
+Total N = 30, n per cell = {('claude', 'agentic'): 5, ('claude', 'single'): 5, ('gemini', 'agentic'): 5, ('gemini', 'single'): 5, ('gpt', 'agentic'): 5, ('gpt', 'single'): 5}, min cell n = 5
+
+Descriptive stats (mean, sd, n) per model x mode:
+                    mean      sd  n
+model_name mode                    
+claude     agentic   0.6  0.5477  5
+           single    0.6  0.5477  5
+gemini     agentic   0.6  0.5477  5
+           single    0.6  0.5477  5
+gpt        agentic   0.6  0.5477  5
+           single    0.6  0.5477  5
+
+Type II ANOVA:
+source                     sum_sq    df          F    p-value  significant(p<.05)
+C(model_name)              0.0000     2     0.0000     1.0000  no
+C(mode)                    0.0000     1     0.0000     1.0000  no
+C(model_name):C(mode)      0.0000     2     0.0000     1.0000  no
+
+==============================================================================
+2. Quality / Maintainability Index (all 5 tasks)  (DV = maintainability_index)
+==============================================================================
+Total N = 30, n per cell = {('claude', 'agentic'): 5, ('claude', 'single'): 5, ('gemini', 'agentic'): 5, ('gemini', 'single'): 5, ('gpt', 'agentic'): 5, ('gpt', 'single'): 5}, min cell n = 5
+
+Descriptive stats (mean, sd, n) per model x mode:
+                      mean       sd  n
+model_name mode                       
+claude     agentic  66.468  13.7633  5
+           single   57.570  26.7510  5
+gemini     agentic  56.810  22.9225  5
+           single   51.860  32.7047  5
+gpt        agentic  53.710  28.2649  5
+           single   66.014  15.9624  5
+
+Type II ANOVA:
+source                     sum_sq    df          F    p-value  significant(p<.05)
+C(model_name)            314.1474     2     0.2652     0.7693  no
+C(mode)                    1.9866     1     0.0034     0.9543  no
+C(model_name):C(mode)    635.6767     2     0.5366     0.5916  no
+
+==============================================================================
+3. Security (BE1 + DB1 only -- embedded jest security tests)  (DV = security_pass)
+==============================================================================
+Total N = 12, n per cell = {('claude', 'agentic'): 2, ('claude', 'single'): 2, ('gemini', 'agentic'): 2, ('gemini', 'single'): 2, ('gpt', 'agentic'): 2, ('gpt', 'single'): 2}, min cell n = 2
+*** LOW POWER WARNING: min cell n = 2 (< 5). With this few observations per cell, treat any p-value here as indicative, not confirmatory. ***
+
+Descriptive stats (mean, sd, n) per model x mode:
+                    mean   sd  n
+model_name mode                 
+claude     agentic   1.0  0.0  2
+           single    1.0  0.0  2
+gemini     agentic   1.0  0.0  2
+           single    1.0  0.0  2
+gpt        agentic   1.0  0.0  2
+           single    1.0  0.0  2
+
+ANOVA: NOT COMPUTABLE -- 'security_pass' has zero variance across all 12 observations (every cell scored the same value) -- F is mathematically undefined (0/0). No ANOVA is reported; this is stated as a finding in its own right, not a computed non-significant result.
+
+==============================================================================
+4. Usability (FE1 + INT1 only)  (DV = usability_score)
+==============================================================================
+Total N = 12, n per cell = {('claude', 'agentic'): 2, ('claude', 'single'): 2, ('gemini', 'agentic'): 2, ('gemini', 'single'): 2, ('gpt', 'agentic'): 2, ('gpt', 'single'): 2}, min cell n = 2
+*** LOW POWER WARNING: min cell n = 2 (< 5). With this few observations per cell, treat any p-value here as indicative, not confirmatory. ***
+
+Descriptive stats (mean, sd, n) per model x mode:
+                    mean      sd  n
+model_name mode                    
+claude     agentic   8.5  0.7071  2
+           single    9.0  0.0000  2
+gemini     agentic   5.5  0.7071  2
+           single    6.5  2.1213  2
+gpt        agentic   7.5  0.7071  2
+           single    5.5  2.1213  2
+
+Type II ANOVA:
+source                     sum_sq    df          F    p-value  significant(p<.05)
+C(model_name)             17.1667     2     4.9048     0.0547  no
+C(mode)                    0.0833     1     0.0476     0.8345  no
+C(model_name):C(mode)      5.1667     2     1.4762     0.3010  no
+
+==============================================================================
+Consistency (NED) -- one-way ANOVA, model main effect only, INT1, single-turn
+==============================================================================
+(No 'mode' factor: NED is computed only over repeated single-turn generations,
+ so there is nothing to compare it against under agentic mode.)
+
+n per model = 3 (the 3 pairwise NED values among 3 repeated generations)
+*** VALIDITY WARNING: the 3 pairwise NED values per model are NOT independent samples -- all 3 are derived from the same 3 underlying generations (r1-r2, r1-r3, r2-r3 share members), so they are correlated by construction. A one-way ANOVA here treats them as if independent, which violates the test's core assumption. Combined with n=3 per group, this result should be read as descriptive, not inferential. ***
+
+Descriptive stats (mean, sd, n) per model:
+  gpt      mean=0.1658  sd=0.0216  n=3  values=[0.1423, 0.1703, 0.1849]
+  gemini   mean=0.4472  sd=0.1688  n=3  values=[0.2531, 0.5598, 0.5287]
+  claude   mean=0.2804  sd=0.1190  n=3  values=[0.3664, 0.1446, 0.3301]
+
+One-way ANOVA: F = 4.1789, p = 0.0730, significant(p<.05) = no

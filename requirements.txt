@@ -3,3 +3,5 @@ anthropic>=0.34.0
 google-genai>=0.3.0
 radon>=6.0.1
 python-Levenshtein>=0.27.1
+scipy>=1.13.1
+statsmodels>=0.14.6
