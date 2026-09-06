@@ -1,0 +1,123 @@
+{
+  "task_id": "INT2",
+  "mode": "single",
+  "run_id_prefix": "consistency-int2",
+  "repeats": 3,
+  "formula": "NED_avg = (2 / (n*(n-1))) * sum(pairwise NED)",
+  "per_model": {
+    "gpt": {
+      "task_id": "INT2",
+      "n_generations": 3,
+      "char_lengths": [
+        308,
+        275,
+        316
+      ],
+      "pairwise_ned": [
+        {
+          "pair": [
+            1,
+            2
+          ],
+          "ned": 0.32792207792207795
+        },
+        {
+          "pair": [
+            1,
+            3
+          ],
+          "ned": 0.23417721518987342
+        },
+        {
+          "pair": [
+            2,
+            3
+          ],
+          "ned": 0.12974683544303797
+        }
+      ],
+      "ned_avg": 0.23061537618499645,
+      "generation_paths": [
+        "/Users/binaymaharjan/Desktop/IT Research Project 2/autonomous_ai_comparision_logix/results/generated/consistency-int2-r1/INT2__gpt__single__turn1__accountRoute.js",
+        "/Users/binaymaharjan/Desktop/IT Research Project 2/autonomous_ai_comparision_logix/results/generated/consistency-int2-r2/INT2__gpt__single__turn1__accountRoute.js",
+        "/Users/binaymaharjan/Desktop/IT Research Project 2/autonomous_ai_comparision_logix/results/generated/consistency-int2-r3/INT2__gpt__single__turn1__accountRoute.js"
+      ]
+    },
+    "gemini": {
+      "task_id": "INT2",
+      "n_generations": 3,
+      "char_lengths": [
+        274,
+        281,
+        281
+      ],
+      "pairwise_ned": [
+        {
+          "pair": [
+            1,
+            2
+          ],
+          "ned": 0.02491103202846975
+        },
+        {
+          "pair": [
+            1,
+            3
+          ],
+          "ned": 0.02491103202846975
+        },
+        {
+          "pair": [
+            2,
+            3
+          ],
+          "ned": 0.0
+        }
+      ],
+      "ned_avg": 0.0166073546856465,
+      "generation_paths": [
+        "/Users/binaymaharjan/Desktop/IT Research Project 2/autonomous_ai_comparision_logix/results/generated/consistency-int2-r1/INT2__gemini__single__turn1__accountRoute.js",
+        "/Users/binaymaharjan/Desktop/IT Research Project 2/autonomous_ai_comparision_logix/results/generated/consistency-int2-r2/INT2__gemini__single__turn1__accountRoute.js",
+        "/Users/binaymaharjan/Desktop/IT Research Project 2/autonomous_ai_comparision_logix/results/generated/consistency-int2-r3/INT2__gemini__single__turn1__accountRoute.js"
+      ]
+    },
+    "claude": {
+      "task_id": "INT2",
+      "n_generations": 3,
+      "char_lengths": [
+        315,
+        315,
+        315
+      ],
+      "pairwise_ned": [
+        {
+          "pair": [
+            1,
+            2
+          ],
+          "ned": 0.0
+        },
+        {
+          "pair": [
+            1,
+            3
+          ],
+          "ned": 0.0
+        },
+        {
+          "pair": [
+            2,
+            3
+          ],
+          "ned": 0.0
+        }
+      ],
+      "ned_avg": 0.0,
+      "generation_paths": [
+        "/Users/binaymaharjan/Desktop/IT Research Project 2/autonomous_ai_comparision_logix/results/generated/consistency-int2-r1/INT2__claude__single__turn1__accountRoute.js",
+        "/Users/binaymaharjan/Desktop/IT Research Project 2/autonomous_ai_comparision_logix/results/generated/consistency-int2-r2/INT2__claude__single__turn1__accountRoute.js",
+        "/Users/binaymaharjan/Desktop/IT Research Project 2/autonomous_ai_comparision_logix/results/generated/consistency-int2-r3/INT2__claude__single__turn1__accountRoute.js"
+      ]
+    }
+  }
+}

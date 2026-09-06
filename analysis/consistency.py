@@ -58,9 +58,15 @@ def main():
     parser.add_argument("--turn", type=int, default=1)
     parser.add_argument("--models", nargs="+", default=["gpt", "gemini", "claude"])
     parser.add_argument("--out", default=None)
+    parser.add_argument(
+        "--target-file",
+        default=None,
+        help="Override: skip the tasks.json lookup and use this target file path directly "
+        "(for a task not yet added to tasks.json).",
+    )
     args = parser.parse_args()
 
-    basename = os.path.basename(load_target_file(args.task))
+    basename = os.path.basename(args.target_file) if args.target_file else os.path.basename(load_target_file(args.task))
 
     results = {}
     for model in args.models:
