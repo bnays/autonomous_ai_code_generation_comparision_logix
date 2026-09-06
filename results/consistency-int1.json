@@ -1,0 +1,123 @@
+{
+  "task_id": "INT1",
+  "mode": "single",
+  "run_id_prefix": "consistency1",
+  "repeats": 3,
+  "formula": "NED_avg = (2 / (n*(n-1))) * sum(pairwise NED)",
+  "per_model": {
+    "gpt": {
+      "task_id": "INT1",
+      "n_generations": 3,
+      "char_lengths": [
+        6555,
+        6042,
+        6263
+      ],
+      "pairwise_ned": [
+        {
+          "pair": [
+            1,
+            2
+          ],
+          "ned": 0.14233409610983982
+        },
+        {
+          "pair": [
+            1,
+            3
+          ],
+          "ned": 0.17025171624713958
+        },
+        {
+          "pair": [
+            2,
+            3
+          ],
+          "ned": 0.1848954175315344
+        }
+      ],
+      "ned_avg": 0.1658270766295046,
+      "generation_paths": [
+        "/Users/binaymaharjan/Desktop/IT Research Project 2/autonomous_ai_comparision_logix/results/generated/consistency1-r1/INT1__gpt__single__turn1__forecastController.js",
+        "/Users/binaymaharjan/Desktop/IT Research Project 2/autonomous_ai_comparision_logix/results/generated/consistency1-r2/INT1__gpt__single__turn1__forecastController.js",
+        "/Users/binaymaharjan/Desktop/IT Research Project 2/autonomous_ai_comparision_logix/results/generated/consistency1-r3/INT1__gpt__single__turn1__forecastController.js"
+      ]
+    },
+    "gemini": {
+      "task_id": "INT1",
+      "n_generations": 3,
+      "char_lengths": [
+        5555,
+        5484,
+        6317
+      ],
+      "pairwise_ned": [
+        {
+          "pair": [
+            1,
+            2
+          ],
+          "ned": 0.2531053105310531
+        },
+        {
+          "pair": [
+            1,
+            3
+          ],
+          "ned": 0.5597593794522716
+        },
+        {
+          "pair": [
+            2,
+            3
+          ],
+          "ned": 0.5287319930346683
+        }
+      ],
+      "ned_avg": 0.447198894339331,
+      "generation_paths": [
+        "/Users/binaymaharjan/Desktop/IT Research Project 2/autonomous_ai_comparision_logix/results/generated/consistency1-r1/INT1__gemini__single__turn1__forecastController.js",
+        "/Users/binaymaharjan/Desktop/IT Research Project 2/autonomous_ai_comparision_logix/results/generated/consistency1-r2/INT1__gemini__single__turn1__forecastController.js",
+        "/Users/binaymaharjan/Desktop/IT Research Project 2/autonomous_ai_comparision_logix/results/generated/consistency1-r3/INT1__gemini__single__turn1__forecastController.js"
+      ]
+    },
+    "claude": {
+      "task_id": "INT1",
+      "n_generations": 3,
+      "char_lengths": [
+        6342,
+        6343,
+        6085
+      ],
+      "pairwise_ned": [
+        {
+          "pair": [
+            1,
+            2
+          ],
+          "ned": 0.3663881444111619
+        },
+        {
+          "pair": [
+            1,
+            3
+          ],
+          "ned": 0.1445916114790287
+        },
+        {
+          "pair": [
+            2,
+            3
+          ],
+          "ned": 0.33012769982658047
+        }
+      ],
+      "ned_avg": 0.2803691519055903,
+      "generation_paths": [
+        "/Users/binaymaharjan/Desktop/IT Research Project 2/autonomous_ai_comparision_logix/results/generated/consistency1-r1/INT1__claude__single__turn1__forecastController.js",
+        "/Users/binaymaharjan/Desktop/IT Research Project 2/autonomous_ai_comparision_logix/results/generated/consistency1-r2/INT1__claude__single__turn1__forecastController.js",
+        "/Users/binaymaharjan/Desktop/IT Research Project 2/autonomous_ai_comparision_logix/results/generated/consistency1-r3/INT1__claude__single__turn1__forecastController.js"
+      ]
+    }
+  }
+}
