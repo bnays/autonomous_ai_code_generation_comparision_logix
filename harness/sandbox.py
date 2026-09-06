@@ -14,6 +14,11 @@ from pathlib import Path
 
 from harness.config import REPO_PATH
 
+# Directories with dependencies that are gitignored in REPO_PATH (so a fresh
+# `git worktree add` never contains them) but are expensive/slow to reinstall
+# per attempt. Symlinked into each new worktree instead of being reinstalled.
+_DEP_DIRS = ["client/node_modules", "backend/node_modules", "ai-module/venv"]
+
 
 class Sandbox:
     def __init__(self, run_id: str):
@@ -27,7 +32,18 @@ class Sandbox:
             check=True,
             capture_output=True,
         )
+        self._link_dependencies()
         return self
+
+    def _link_dependencies(self):
+        """Symlink pre-installed dependency dirs from REPO_PATH into the worktree
+        so tests don't need a fresh `npm install`/venv build per attempt."""
+        for rel in _DEP_DIRS:
+            src = Path(REPO_PATH) / rel
+            dst = self.worktree_path / rel
+            if src.exists() and not dst.exists():
+                dst.parent.mkdir(parents=True, exist_ok=True)
+                dst.symlink_to(src, target_is_directory=True)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         subprocess.run(
