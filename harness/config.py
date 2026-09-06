@@ -40,7 +40,7 @@ if not REPO_PATH:
     )
 
 # --- 3. Iteration settings for the agentic (multi-turn) condition ----------
-MAX_TURNS_AGENTIC = 4       # hard cap so a non-converging model can't loop forever
+MAX_TURNS_AGENTIC = 3       # hard cap so a non-converging model can't loop forever
 MAX_TURNS_SINGLE = 1        # baseline / NIT6001-equivalent condition
 
 # --- 4. Where results get written -------------------------------------------
