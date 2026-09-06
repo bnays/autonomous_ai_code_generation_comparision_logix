@@ -13,6 +13,13 @@ Install what you need:
 import os
 from harness.config import ModelConfig
 
+# Shared across all three providers so the token budget doesn't confound the
+# model comparison. Generous enough that a reasoning model (e.g. gpt-5) can
+# spend tokens on hidden reasoning and still have room left to emit code --
+# 4096 was observed to let GPT-5 exhaust the entire budget on reasoning for
+# a hard task, returning zero characters of actual output.
+MAX_OUTPUT_TOKENS = 16000
+
 
 class ModelClient:
     def __init__(self, cfg: ModelConfig):
@@ -44,7 +51,7 @@ class ModelClient:
             resp = self._client.chat.completions.create(
                 model=self.cfg.model_id,
                 messages=messages,
-                max_completion_tokens=4096,
+                max_completion_tokens=MAX_OUTPUT_TOKENS,
             )
             return resp.choices[0].message.content
 
@@ -52,7 +59,7 @@ class ModelClient:
             # Anthropic API takes system separately; no system prompt needed here.
             resp = self._client.messages.create(
                 model=self.cfg.model_id,
-                max_tokens=4096,
+                max_tokens=MAX_OUTPUT_TOKENS,
                 messages=messages,
             )
             return "".join(block.text for block in resp.content if block.type == "text")
@@ -60,6 +67,7 @@ class ModelClient:
         elif self.cfg.provider == "google":
             # Google GenAI SDK expects a single content string or turn history;
             # flatten messages into one alternating-turn call.
+            from google.genai import types
             contents = []
             for m in messages:
                 role = "user" if m["role"] == "user" else "model"
@@ -67,6 +75,7 @@ class ModelClient:
             resp = self._client.models.generate_content(
                 model=self.cfg.model_id,
                 contents=contents,
+                config=types.GenerateContentConfig(max_output_tokens=MAX_OUTPUT_TOKENS),
             )
             return resp.text
 

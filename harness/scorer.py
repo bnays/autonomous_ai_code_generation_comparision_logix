@@ -1,7 +1,9 @@
 """
 Scores one attempt against the five NIT6001 dimensions:
   1. Correctness      -> pass/fail from test_command
-  2. Code quality      -> Maintainability Index (via radon, Python; adapt for TS)
+  2. Code quality      -> Maintainability Index (via radon for Python; a
+                           cyclomatic-complexity-based proxy via ESLint for
+                           TypeScript/JavaScript, see compute_js_ts_complexity)
   3. Security          -> pass/fail + finding count from security_scan_command
   4. Consistency        -> Normalised Edit Distance across repeated runs (computed
                            separately in loop.py by comparing multiple attempts)
@@ -11,8 +13,16 @@ Scores one attempt against the five NIT6001 dimensions:
 
 from __future__ import annotations
 
+import json
+import os
+import re
+import shlex
 from dataclasses import dataclass, asdict
 from harness.sandbox import Sandbox
+
+_ESLINT_TOOLING_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "eslint-tooling")
+_ESLINT_BIN = os.path.join(_ESLINT_TOOLING_DIR, "node_modules", ".bin", "eslint")
+_ESLINT_CONFIG = os.path.join(_ESLINT_TOOLING_DIR, "complexity.config.mjs")
 
 
 @dataclass
@@ -47,9 +57,50 @@ def run_security_scan(sandbox: Sandbox, scan_command: str | None) -> tuple[int, 
     return finding_count, output
 
 
+def compute_js_ts_complexity(sandbox: Sandbox, target_file: str) -> float | None:
+    """Cyclomatic-complexity-based maintainability proxy for TS/JS, since radon
+    only covers Python. Uses a standalone ESLint install owned by this harness
+    (harness/eslint-tooling) rather than either target repo's own config --
+    client's eslint.config.mjs imports eslint-config-next, which isn't
+    installed, and backend has no ESLint at all. The `complexity` rule is set
+    to threshold 0 so every function reports its complexity as a message,
+    turning the rule into a metric dump instead of a pass/fail lint.
+
+    Not a real Halstead-based Maintainability Index like radon's -- just an
+    average-cyclomatic-complexity score linearly mapped onto the same 0-100,
+    higher-is-better scale so it stays directionally comparable at a glance.
+    A file that fails to parse (e.g. genuinely broken generated code) or
+    defines no functions returns None, same as radon's failure case.
+    """
+    command = (
+        f"{shlex.quote(_ESLINT_BIN)} --no-config-lookup "
+        f"--config {shlex.quote(_ESLINT_CONFIG)} --format json {shlex.quote(target_file)}"
+    )
+    _, output = sandbox.run_command(command)
+    try:
+        results = json.loads(output)
+    except (json.JSONDecodeError, ValueError):
+        return None
+
+    complexities = []
+    for file_result in results:
+        for message in file_result.get("messages", []):
+            match = re.search(r"complexity of (\d+)", message.get("message", ""))
+            if match:
+                complexities.append(int(match.group(1)))
+
+    if not complexities:
+        return None
+
+    avg_complexity = sum(complexities) / len(complexities)
+    return max(0.0, round(100.0 - (avg_complexity - 1) * 10, 2))
+
+
 def compute_maintainability_index(sandbox: Sandbox, target_file: str, language: str) -> float | None:
+    if language in ("typescript", "javascript"):
+        return compute_js_ts_complexity(sandbox, target_file)
     if language != "python":
-        return None  # add a TS/JS equivalent (e.g. via `ts-complexity` or eslint) if needed
+        return None
     exit_code, output = sandbox.run_command(f"radon mi {target_file} -s")
     if exit_code != 0:
         return None

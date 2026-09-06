@@ -1,0 +1,9 @@
+{
+  "name": "harness-eslint-tooling",
+  "private": true,
+  "description": "Self-contained ESLint install used only by harness/scorer.py to compute a complexity-based maintainability proxy for generated TS/JS code. Deliberately independent of the target repo's own eslint config (client's is missing eslint-config-next; backend has no ESLint at all), so scoring never depends on either being fixed.",
+  "devDependencies": {
+    "eslint": "^9.28.0",
+    "@typescript-eslint/parser": "^8.0.0"
+  }
+}
