@@ -1,21 +1,23 @@
 """
 Two-way ANOVA (model x mode), per Methodology section 5.4, across five
-outcome measures:
+outcome measures. Task sets for Security/Usability/Consistency are read
+from tasks.json's "dimensions" field (not hardcoded), so this scales to
+however many tasks carry each dimension:
 
-  1. Correctness  -- passed_tests (0/1), all 5 tasks              n=5/cell
-  2. Quality       -- maintainability_index, all 5 tasks            n=5/cell
+  1. Correctness  -- passed_tests (0/1), every task
+  2. Quality       -- maintainability_index, every task
   3. Security      -- derived pass/fail from embedded jest security
-                       tests, BE1 + DB1 only (the only two tasks with
-                       an embedded security-test subset; no separate
-                       scanner was configured for any task)          n=2/cell
-  4. Usability     -- usability_score, FE1 + INT1 only (the only two
-                       tasks with a scored usability dimension)      n=2/cell
-  5. Consistency   -- pairwise NED, INT1 only, model main effect
+                       tests, tasks with "Security" in dimensions only
+                       (no separate scanner was configured for any task)
+  4. Usability     -- usability_score, tasks with "Usability" in
+                       dimensions only
+  5. Consistency   -- pairwise NED, one one-way ANOVA per task with
+                       "Consistency" in dimensions, model main effect
                        only (NED is single-turn-by-definition, so
-                       there is no "mode" factor to test)            n=3/group
+                       there is no "mode" factor to test)
 
 Uses statsmodels (OLS + Type II anova_lm) for the two-way tests and
-scipy.stats.f_oneway for the one-way consistency test.
+scipy.stats.f_oneway for the one-way consistency test(s).
 
 Usage:
     python analysis/anova.py
@@ -35,11 +37,28 @@ from scipy import stats
 _BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _RESULTS = os.path.join(_BASE_DIR, "results")
 
-SECURITY_TASKS = {"BE1", "DB1"}
-USABILITY_TASKS = {"FE1", "INT1"}
-
 SIG_ALPHA = 0.05
 MIN_CELL_N_FOR_POWER_NOTE = 5  # below this, flag the test as likely underpowered
+
+
+def load_task_dimensions():
+    """Reads tasks.json's "dimensions" field so Security/Usability/Consistency
+    task sets are derived, not hardcoded -- adding a task to tasks.json is
+    then enough, no need to also update this file."""
+    with open(os.path.join(_BASE_DIR, "tasks.json")) as f:
+        tasks = json.load(f)
+    by_dimension = {"Security": set(), "Usability": set(), "Consistency": set()}
+    for t in tasks:
+        for dim in t.get("dimensions", []):
+            if dim in by_dimension:
+                by_dimension[dim].add(t["task_id"])
+    return by_dimension
+
+
+_task_dimensions = load_task_dimensions()
+SECURITY_TASKS = _task_dimensions["Security"]
+USABILITY_TASKS = _task_dimensions["Usability"]
+CONSISTENCY_TASKS = _task_dimensions["Consistency"]
 
 
 def load_jsonl(path):
@@ -48,8 +67,8 @@ def load_jsonl(path):
 
 
 def build_frame():
-    single = load_jsonl(os.path.join(_RESULTS, "results-baseline2-reviewed.jsonl"))
-    agentic = load_jsonl(os.path.join(_RESULTS, "results-agentic1-reviewed.jsonl"))
+    single = load_jsonl(os.path.join(_RESULTS, "results-baseline-full.jsonl"))
+    agentic = load_jsonl(os.path.join(_RESULTS, "results-agentic-full.jsonl"))
     rows = single + agentic
     df = pd.DataFrame(rows)
     df["passed_tests_num"] = df["passed_tests"].astype(int)
@@ -155,8 +174,13 @@ def print_two_way(result):
         print(f"{source:22} {row['sum_sq']:>10.4f} {row['df']:>5.0f} {f_val:>10.4f} {p_val:>10.4f}  {sig}")
 
 
-def one_way_consistency():
-    path = os.path.join(_RESULTS, "consistency-int1.json")
+def one_way_consistency(task_id):
+    path = os.path.join(_RESULTS, f"consistency-{task_id.lower()}.json")
+    if not os.path.exists(path):
+        print(f"\n{'=' * 78}\nConsistency (NED) -- {task_id}\n{'=' * 78}")
+        print(f"SKIPPED -- {path} does not exist yet (no repeated-generation NED data collected for {task_id}).")
+        return
+
     with open(path) as f:
         data = json.load(f)
 
@@ -164,7 +188,7 @@ def one_way_consistency():
     for model, info in data["per_model"].items():
         groups[model] = [p["ned"] for p in info["pairwise_ned"]]
 
-    print(f"\n{'=' * 78}\nConsistency (NED) -- one-way ANOVA, model main effect only, INT1, single-turn\n{'=' * 78}")
+    print(f"\n{'=' * 78}\nConsistency (NED) -- one-way ANOVA, model main effect only, {task_id}, single-turn\n{'=' * 78}")
     print("(No 'mode' factor: NED is computed only over repeated single-turn generations,")
     print(" so there is nothing to compare it against under agentic mode.)\n")
     print(f"n per model = 3 (the 3 pairwise NED values among 3 repeated generations)")
@@ -186,20 +210,22 @@ def one_way_consistency():
 
 def main():
     df = build_frame()
+    n_tasks = df["task_id"].nunique()
 
-    r1 = two_way_anova(df, "passed_tests_num", task_filter=None, label="1. Correctness (all 5 tasks)")
+    r1 = two_way_anova(df, "passed_tests_num", task_filter=None, label=f"1. Correctness (all {n_tasks} tasks)")
     print_two_way(r1)
 
-    r2 = two_way_anova(df, "maintainability_index", task_filter=None, label="2. Quality / Maintainability Index (all 5 tasks)")
+    r2 = two_way_anova(df, "maintainability_index", task_filter=None, label=f"2. Quality / Maintainability Index (all {n_tasks} tasks)")
     print_two_way(r2)
 
-    r3 = two_way_anova(df, "security_pass", task_filter=SECURITY_TASKS, label="3. Security (BE1 + DB1 only -- embedded jest security tests)")
+    r3 = two_way_anova(df, "security_pass", task_filter=SECURITY_TASKS, label=f"3. Security ({', '.join(sorted(SECURITY_TASKS))} only -- embedded jest security tests)")
     print_two_way(r3)
 
-    r4 = two_way_anova(df, "usability_score", task_filter=USABILITY_TASKS, label="4. Usability (FE1 + INT1 only)")
+    r4 = two_way_anova(df, "usability_score", task_filter=USABILITY_TASKS, label=f"4. Usability ({', '.join(sorted(USABILITY_TASKS))} only)")
     print_two_way(r4)
 
-    one_way_consistency()
+    for task_id in sorted(CONSISTENCY_TASKS):
+        one_way_consistency(task_id)
 
 
 if __name__ == "__main__":

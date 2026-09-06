@@ -9,7 +9,8 @@
         "target_file": "client/src/app/dashboard/page.tsx",
         "test_command": "cd client && npx jest src/app/dashboard/page.test.tsx",
         "security_scan_command": null,
-        "language": "typescript"
+        "language": "typescript",
+        "dimensions": ["Correctness", "Quality", "Usability"]
     },
     {
         "task_id": "BE1",
@@ -19,7 +20,8 @@
         "target_file": "backend/middleware/authMiddleware.js",
         "test_command": "cd backend && npx jest middleware/authMiddleware.test.js",
         "security_scan_command": null,
-        "language": "typescript"
+        "language": "typescript",
+        "dimensions": ["Correctness", "Quality", "Security"]
     },
     {
         "task_id": "PY1",
@@ -29,7 +31,8 @@
         "target_file": "ai-module/forecast.py",
         "test_command": "cd ai-module && ./venv/bin/python3.13 -m pytest test_forecast.py -v",
         "security_scan_command": null,
-        "language": "python"
+        "language": "python",
+        "dimensions": ["Correctness", "Quality"]
     },
     {
         "task_id": "DB1",
@@ -41,7 +44,8 @@
         "target_file": "backend/controllers/inventoryController.js",
         "test_command": "cd backend && npx jest controllers/productsFilter.test.js",
         "security_scan_command": null,
-        "language": "typescript"
+        "language": "typescript",
+        "dimensions": ["Correctness", "Quality", "Security"]
     },
     {
         "task_id": "INT1",
@@ -53,6 +57,72 @@
         "target_file": "backend/controllers/forecastController.js",
         "test_command": "cd backend && npx jest controllers/forecastController.test.js",
         "security_scan_command": null,
-        "language": "typescript"
+        "language": "typescript",
+        "dimensions": ["Correctness", "Quality", "Usability", "Consistency"]
+    },
+    {
+        "task_id": "BE2",
+        "category": "BE",
+        "description": "Add exports.bulkAdjustStock(req, res) to backend/controllers/inventoryController.js. Accept req.body.adjustments as an array of { product_id, quantity_change, reason } objects. Using a single database transaction (db.getConnection(), beginTransaction()), first read the current quantity_on_hand for every affected product_id from the inventory table. Validate that applying every adjustment's quantity_change would not drive any product's quantity_on_hand negative; if any adjustment would, roll back the transaction without applying any adjustment in the batch (not just the offending one) and return 400. Otherwise, for each adjustment: update inventory.quantity_on_hand by quantity_change, and insert an audit row into stock_transactions (product_id, user_id, transaction_type, quantity_changed, reason), where transaction_type is 'Inflow' for a positive quantity_change and 'Outflow' for a negative one, and user_id comes from req.user?.user_id (default to 1 if absent, matching this codebase's existing receivePurchaseOrder pattern). Commit and return 200 on success. On an unexpected database error, roll back and return 500. Always release the connection, even on failure.",
+        "context_files": [
+            "backend/controllers/inventoryController.js"
+        ],
+        "target_file": "backend/controllers/inventoryController.js",
+        "test_command": "cd backend && npx jest controllers/bulkAdjustStock.test.js",
+        "security_scan_command": null,
+        "language": "typescript",
+        "dimensions": ["Correctness", "Quality"]
+    },
+    {
+        "task_id": "FE2",
+        "category": "FE",
+        "description": "Wire up the notification preferences form in client/src/components/dashboard/settings/notifications.tsx, whose onSubmit is currently a no-op (event.preventDefault() only, with uncontrolled checkboxes and no state tracking, and no backend call). Convert the 4 checkboxes to controlled React state with keys emailProductUpdates, emailSecurityUpdates, phoneProductUpdates, and phoneSecurityUpdates (in that DOM order), initialized to match the current visual defaults (the first checkbox in each column starts checked, the second starts unchecked) — keep the existing visible labels and layout unchanged. On submit, call apiRequest('/users/notification-preferences', { method: 'PUT', body: JSON.stringify(preferences) }) with the current preferences state as the JSON body, matching the apiRequest-call pattern used by every other form in this codebase (e.g. account-details-form.tsx). While the request is in flight, the Save changes button must be disabled, matching the isSaving/isSubmitting convention used by those same forms, and re-enabled once the request settles.",
+        "context_files": [
+            "client/src/components/dashboard/settings/notifications.tsx"
+        ],
+        "target_file": "client/src/components/dashboard/settings/notifications.tsx",
+        "test_command": "cd client && npx jest src/components/dashboard/settings/notifications.test.tsx",
+        "security_scan_command": null,
+        "language": "typescript",
+        "dimensions": ["Correctness", "Quality", "Usability"]
+    },
+    {
+        "task_id": "PY2",
+        "category": "PY",
+        "description": "Create ai-module/reorder.py with a function calculate_reorder_point(daily_forecast, lead_time_days, service_level_z=1.65). daily_forecast is a list of dicts shaped like forecast.py's `daily` output: [{\"date\": ..., \"predicted_sales\": int}, ...]. Compute average_daily_demand as the mean of predicted_sales across daily_forecast, and the population standard deviation of the same values (demand_stdev). safety_stock = round(service_level_z * demand_stdev * sqrt(lead_time_days)); reorder_point = round(average_daily_demand * lead_time_days) + safety_stock. Return {\"average_daily_demand\": ..., \"safety_stock\": ..., \"reorder_point\": ...}. If daily_forecast is empty or lead_time_days is not positive, return {\"error\": ...} instead of raising, matching forecast.py's existing failure-handling convention (never raises). The result must be JSON-serializable.",
+        "context_files": [
+            "ai-module/forecast.py"
+        ],
+        "target_file": "ai-module/reorder.py",
+        "test_command": "cd ai-module && ./venv/bin/python3.13 -m pytest test_reorder.py -v",
+        "security_scan_command": null,
+        "language": "python",
+        "dimensions": ["Correctness", "Quality"]
+    },
+    {
+        "task_id": "DB2",
+        "category": "DB",
+        "description": "Add exports.getCategorySalesReport(req, res) to backend/controllers/categoryController.js. Query total sales revenue and units sold per category by joining categories to products to sale_order_items (which has product_id, quantity, unit_price), using LEFT JOINs throughout so categories with no sales still appear in the results with zero totals rather than being excluded. Group by category and compute SUM(quantity * unit_price) as total_revenue and SUM(quantity) as total_units_sold per category, matching the GROUP BY/LEFT JOIN convention already used by getAllCategories in the same file. Return 200 with the resulting rows as a bare JSON array (res.status(200).json(rows)), matching getAllCategories' existing response shape (not the {data, meta} pagination wrapper used elsewhere). On a database error, return 500.",
+        "context_files": [
+            "backend/controllers/categoryController.js"
+        ],
+        "target_file": "backend/controllers/categoryController.js",
+        "test_command": "cd backend && npx jest controllers/categoryReport.test.js",
+        "security_scan_command": null,
+        "language": "typescript",
+        "dimensions": ["Correctness", "Quality"]
+    },
+    {
+        "task_id": "INT2",
+        "category": "INT",
+        "description": "Create backend/routes/accountRoute.js, an Express Router exposing GET /session. The route must be protected by the existing exports.protect middleware from backend/middleware/authMiddleware.js, requiring either the 'admin' or 'user' role (protect(['admin', 'user'])). Requests without a valid Authorization Bearer token, or with an invalid/expired one, are rejected by the middleware itself (401) — no explicit handling needed in the route handler. When the request passes the middleware, the route handler must respond with 200 and a JSON body of the shape { user: req.user }, where req.user is the decoded token payload protect() attaches to the request. Export the configured router (module.exports = router).",
+        "context_files": [
+            "backend/middleware/authMiddleware.js"
+        ],
+        "target_file": "backend/routes/accountRoute.js",
+        "test_command": "cd backend && npx jest routes/accountRoute.test.js",
+        "security_scan_command": null,
+        "language": "typescript",
+        "dimensions": ["Correctness", "Quality", "Consistency"]
     }
 ]

@@ -4,9 +4,11 @@ for each final attempt, the same way NIT6001's expert-review dimension worked.
 Only scores the LAST turn per (task, model, mode) -- i.e. the final attempt,
 since that's what would actually ship.
 
-Usability is only a defined dimension for FE1 and INT1 (the two tasks with a
-real end-user/integration surface) -- BE1, PY1, and DB1 are skipped entirely
-and keep usability_score = null.
+Usability is only a defined dimension for tasks whose tasks.json entry lists
+it (page-level/cross-cutting integration tasks -- FE1, INT1, FE2 as of this
+writing) -- every other task is skipped entirely and keeps
+usability_score = null. Read from tasks.json's "dimensions" field rather
+than hardcoded here, so adding a task doesn't require touching this file.
 
 Before each prompt, prints the actual generated code from
 results/generated/<run_id>/ for that task/model pair, so you're reviewing
@@ -19,13 +21,18 @@ import sys
 import os
 import json
 
-USABILITY_TASKS = {"FE1", "INT1"}
 
-
-def load_target_files(base_dir):
+def load_tasks_json(base_dir):
     with open(os.path.join(base_dir, "tasks.json")) as f:
-        tasks = json.load(f)
+        return json.load(f)
+
+
+def load_target_files(tasks):
     return {t["task_id"]: t["target_file"] for t in tasks}
+
+
+def load_usability_tasks(tasks):
+    return {t["task_id"] for t in tasks if "Usability" in t.get("dimensions", [])}
 
 
 def load_generated_code(base_dir, run_id, task_id, model_name, mode, turn, target_file):
@@ -52,7 +59,9 @@ def main():
         run_id = run_id[len("results-"):]
     if run_id.endswith(".jsonl"):
         run_id = run_id[: -len(".jsonl")]
-    target_files = load_target_files(base_dir)
+    tasks_json = load_tasks_json(base_dir)
+    target_files = load_target_files(tasks_json)
+    usability_tasks = load_usability_tasks(tasks_json)
 
     with open(path) as f:
         rows = [json.loads(line) for line in f]
@@ -66,7 +75,7 @@ def main():
 
     reviewed = []
     for (task_id, model_name, mode), r in latest.items():
-        if task_id not in USABILITY_TASKS:
+        if task_id not in usability_tasks:
             r["usability_score"] = None
             reviewed.append(r)
             continue
