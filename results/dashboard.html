@@ -1,0 +1,359 @@
+<title>Logix Codegen Benchmark</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --bg:#f9f9f7; --surface:#fcfcfb; --surface-2:#f1f0ec; --text:#0b0b0b; --muted:#52514e; --muted2:#898781;
+    --border:#e1e0d9; --axis:#c3c2b7;
+    --gpt:#2a78d6; --gemini:#eb6834; --claude:#1baf7a;
+    --pass:#0ca30c; --pass-soft:#e4f6e4; --fail:#d03b3b; --fail-soft:#fbe7e7;
+    --accent:#2a78d6; --accent-soft:#e8f0fb;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0d0d0d; --surface:#1a1a19; --surface-2:#222221; --text:#ffffff; --muted:#c3c2b7; --muted2:#898781;
+      --border:#2c2c2a; --axis:#383835;
+      --gpt:#3987e5; --gemini:#d95926; --claude:#199e70;
+      --pass:#0ca30c; --pass-soft:#132a13; --fail:#e66767; --fail-soft:#301616;
+      --accent:#3987e5; --accent-soft:#182338;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0d0d0d; --surface:#1a1a19; --surface-2:#222221; --text:#ffffff; --muted:#c3c2b7; --muted2:#898781;
+    --border:#2c2c2a; --axis:#383835;
+    --gpt:#3987e5; --gemini:#d95926; --claude:#199e70;
+    --pass:#0ca30c; --pass-soft:#132a13; --fail:#e66767; --fail-soft:#301616;
+    --accent:#3987e5; --accent-soft:#182338;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:"IBM Plex Sans", -apple-system, "Segoe UI", sans-serif;line-height:1.5;}
+  .wrap{max-width:1080px;margin:0 auto;padding:2.5rem 1.5rem 5rem;}
+
+  header.masthead{border-bottom:1px solid var(--border);padding-bottom:1.75rem;margin-bottom:2rem;}
+  .eyebrow{font-family:"IBM Plex Mono", monospace;font-size:.72rem;letter-spacing:.09em;text-transform:uppercase;color:var(--accent);font-weight:600;}
+  h1{font-size:2rem;font-weight:700;margin:.4rem 0 .6rem;text-wrap:balance;letter-spacing:-0.01em;}
+  .lede{color:var(--muted);font-size:1rem;max-width:70ch;margin:0 0 1.25rem;}
+  .run-meta{display:flex;flex-wrap:wrap;gap:.5rem;}
+  .meta-chip{font-family:"IBM Plex Mono", monospace;font-size:.78rem;background:var(--surface-2);border:1px solid var(--border);color:var(--muted);padding:.3rem .6rem;border-radius:.35rem;}
+  .meta-chip b{color:var(--text);font-weight:600;}
+
+  section{margin-bottom:3rem;}
+  h2{font-size:1.25rem;font-weight:700;margin:0 0 .3rem;letter-spacing:-0.01em;}
+  .section-sub{color:var(--muted);font-size:.9rem;margin:0 0 1.25rem;max-width:72ch;}
+
+  /* stat tiles */
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--border);border:1px solid var(--border);border-radius:.6rem;overflow:hidden;}
+  .tile{background:var(--surface);padding:1.1rem 1.2rem;}
+  .tile .num{font-size:1.9rem;font-weight:700;letter-spacing:-0.02em;font-variant-numeric:tabular-nums;}
+  .tile .num small{font-size:1rem;font-weight:500;color:var(--muted);}
+  .tile .label{font-size:.78rem;color:var(--muted);margin-top:.15rem;}
+  .tile.pass .num{color:var(--pass);}
+  .tile.fail .num{color:var(--fail);}
+
+  /* legend */
+  .legend{display:flex;gap:1.25rem;flex-wrap:wrap;margin-bottom:1rem;font-size:.82rem;color:var(--muted);}
+  .legend-item{display:flex;align-items:center;gap:.4rem;}
+  .swatch{width:11px;height:11px;border-radius:3px;display:inline-block;}
+
+  /* results grid */
+  .grid-scroll{overflow-x:auto;border:1px solid var(--border);border-radius:.6rem;}
+  table.results{border-collapse:collapse;width:100%;background:var(--surface);font-size:.86rem;}
+  table.results th, table.results td{padding:.55rem .7rem;text-align:center;border-bottom:1px solid var(--border);white-space:nowrap;}
+  table.results thead th{background:var(--surface-2);font-family:"IBM Plex Mono", monospace;font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600;border-bottom:1px solid var(--border);}
+  table.results td.task-cell{text-align:left;font-family:"IBM Plex Mono", monospace;font-weight:600;color:var(--text);position:sticky;left:0;background:var(--surface);}
+  table.results tr:last-child td{border-bottom:none;}
+  table.results tr:hover td{background:var(--surface-2);}
+  table.results tr:hover td.task-cell{background:var(--surface-2);}
+  .cell-pair{display:flex;gap:.3rem;justify-content:center;align-items:center;}
+  .dot{width:9px;height:9px;border-radius:50%;display:inline-block;flex-shrink:0;}
+  .dot.pass{background:var(--pass);}
+  .dot.fail{background:var(--fail);}
+  .turns{font-family:"IBM Plex Mono", monospace;font-size:.72rem;color:var(--muted2);}
+  .col-group-label{font-size:.68rem;}
+
+  /* bar charts */
+  .chart-row{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;}
+  @media (max-width:720px){.chart-row{grid-template-columns:1fr;}}
+  .chart-card{background:var(--surface);border:1px solid var(--border);border-radius:.6rem;padding:1.2rem 1.3rem 1rem;}
+  .chart-card h3{font-size:.92rem;font-weight:700;margin:0 0 .2rem;}
+  .chart-card .chart-note{font-size:.78rem;color:var(--muted);margin:0 0 .9rem;}
+  .bar-label{font-family:"IBM Plex Mono", monospace;font-size:.76rem;fill:var(--muted);}
+  .bar-value{font-family:"IBM Plex Mono", monospace;font-size:.76rem;fill:var(--text);font-weight:600;}
+  .axis-line{stroke:var(--axis);stroke-width:1;}
+  svg text{font-family:"IBM Plex Sans", sans-serif;}
+
+  /* anova table */
+  .anova-scroll{overflow-x:auto;border:1px solid var(--border);border-radius:.6rem;}
+  table.anova{border-collapse:collapse;width:100%;background:var(--surface);font-size:.84rem;}
+  table.anova th, table.anova td{padding:.6rem .8rem;text-align:left;border-bottom:1px solid var(--border);}
+  table.anova thead th{background:var(--surface-2);font-family:"IBM Plex Mono", monospace;font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600;}
+  table.anova td.num, table.anova th.num{text-align:right;font-family:"IBM Plex Mono", monospace;font-variant-numeric:tabular-nums;}
+  table.anova tr:last-child td{border-bottom:none;}
+  .sig-yes{color:var(--pass);font-weight:700;}
+  .sig-no{color:var(--muted2);}
+  .dim-row td{font-weight:700;background:var(--surface-2);}
+  .caveat{font-size:.78rem;color:var(--muted);margin-top:.6rem;}
+  .caveat b{color:var(--fail);}
+
+  footer.note{border-top:1px solid var(--border);padding-top:1.5rem;margin-top:1rem;color:var(--muted);font-size:.85rem;}
+  footer.note p{margin:.3rem 0;}
+  footer.note code{font-family:"IBM Plex Mono", monospace;background:var(--surface-2);border:1px solid var(--border);padding:.1rem .35rem;border-radius:.25rem;font-size:.82rem;color:var(--text);}
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="eyebrow">Logix warehouse codegen benchmark</div>
+    <h1>10 tasks &times; 3 models &times; 2 modes</h1>
+    <p class="lede">Every cell run to completion, zero infrastructure failures. 5 dimensions measured: Correctness (test pass/fail), Quality (maintainability index), Security (embedded jest security tests, 2 tasks), Usability (manual expert review, 3 tasks), and Consistency (output stability across repeats, 2 tasks).</p>
+    <div class="run-meta">
+      <span class="meta-chip">runs: <b>baseline-full &middot; agentic-full</b></span>
+      <span class="meta-chip">cells: <b>60</b></span>
+      <span class="meta-chip">agentic turn cap: <b>3</b></span>
+      <span class="meta-chip">infra failures: <b>0</b></span>
+    </div>
+  </header>
+
+  <section id="overview">
+    <h2>Overview</h2>
+    <p class="section-sub">Pass rate is identical between single-turn and agentic for every model &mdash; agentic mode never flips a cell's ultimate outcome, even though it visibly changes how a model fails along the way.</p>
+    <div class="tiles">
+      <div class="tile pass"><div class="num">22<small>/30</small></div><div class="label">single-turn pass</div></div>
+      <div class="tile pass"><div class="num">22<small>/30</small></div><div class="label">agentic pass</div></div>
+      <div class="tile fail"><div class="num">3<small>/10</small></div><div class="label">tasks failed by &ge;1 model, both modes</div></div>
+      <div class="tile"><div class="num">2<small>/10</small></div><div class="label">tasks failed by all 3 models</div></div>
+      <div class="tile pass"><div class="num">100<small>%</small></div><div class="label">security tests passed (BE1, DB1)</div></div>
+    </div>
+  </section>
+
+  <section id="grid">
+    <h2>Task &times; model &times; mode</h2>
+    <p class="section-sub">Each cell: single-turn result, agentic final-turn result, and turns taken to reach that result (agentic only, capped at 3).</p>
+    <div class="legend">
+      <span class="legend-item"><span class="dot pass" style="width:9px;height:9px;"></span> pass</span>
+      <span class="legend-item"><span class="dot fail" style="width:9px;height:9px;"></span> fail</span>
+      <span class="legend-item">single &middot; agentic &middot; <span class="turns">turns</span></span>
+    </div>
+    <div class="grid-scroll">
+      <table class="results">
+        <thead>
+          <tr>
+            <th rowspan="2" style="text-align:left;">Task</th>
+            <th colspan="1">gpt</th>
+            <th colspan="1">gemini</th>
+            <th colspan="1">claude</th>
+          </tr>
+        </thead>
+        <tbody id="results-body"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="quality">
+    <h2>Quality &amp; Usability</h2>
+    <p class="section-sub">Quality (maintainability index, 0&ndash;100) is automatic across all 10 tasks. Usability (0&ndash;10) is a manual expert-review score, scoped to the 3 tasks with a real end-user or cross-cutting surface: FE1, FE2, INT1.</p>
+    <div class="chart-row">
+      <div class="chart-card">
+        <h3>Avg maintainability index</h3>
+        <p class="chart-note">All 10 tasks, per model &times; mode</p>
+        <svg id="chart-mi" viewBox="0 0 420 220" width="100%" role="img" aria-label="Average maintainability index by model and mode"></svg>
+      </div>
+      <div class="chart-card">
+        <h3>Avg usability score</h3>
+        <p class="chart-note">FE1, FE2, INT1 only &middot; 0&ndash;10 scale</p>
+        <svg id="chart-us" viewBox="0 0 420 220" width="100%" role="img" aria-label="Average usability score by model and mode"></svg>
+      </div>
+    </div>
+  </section>
+
+  <section id="consistency">
+    <h2>Consistency (Normalised Edit Distance)</h2>
+    <p class="section-sub">3 repeated single-turn generations per model &rarr; average pairwise NED. Lower means the model produces more similar output across independent attempts at the same task. INT1 and INT2 are the only tasks with repeat-generation data collected.</p>
+    <div class="chart-row">
+      <div class="chart-card">
+        <h3>INT1 &middot; category&rarr;forecast integration</h3>
+        <p class="chart-note">lower = more consistent</p>
+        <svg id="chart-ned1" viewBox="0 0 420 180" width="100%" role="img" aria-label="NED by model for INT1"></svg>
+      </div>
+      <div class="chart-card">
+        <h3>INT2 &middot; auth-protected route</h3>
+        <p class="chart-note">lower = more consistent</p>
+        <svg id="chart-ned2" viewBox="0 0 420 180" width="100%" role="img" aria-label="NED by model for INT2"></svg>
+      </div>
+    </div>
+  </section>
+
+  <section id="stats">
+    <h2>Two-way ANOVA (model &times; mode)</h2>
+    <p class="section-sub">Full 60-row dataset. Correctness and Quality span all 10 tasks; Security is BE1+DB1 only; Usability is FE1/FE2/INT1 only; Consistency is a one-way (model only) test per task, since NED has no "mode" factor.</p>
+    <div class="anova-scroll">
+      <table class="anova">
+        <thead>
+          <tr><th>Dimension</th><th>Effect</th><th class="num">F</th><th class="num">p</th><th>Significant (p&lt;.05)</th></tr>
+        </thead>
+        <tbody>
+          <tr class="dim-row"><td colspan="5">1. Correctness &mdash; all 10 tasks, n=10/cell</td></tr>
+          <tr><td></td><td>Model</td><td class="num">0.310</td><td class="num">0.735</td><td class="sig-no">no</td></tr>
+          <tr><td></td><td>Mode</td><td class="num">0.000</td><td class="num">1.000</td><td class="sig-no">no</td></tr>
+          <tr><td></td><td>Model &times; Mode</td><td class="num">0.000</td><td class="num">1.000</td><td class="sig-no">no</td></tr>
+
+          <tr class="dim-row"><td colspan="5">2. Quality (MI) &mdash; all 10 tasks, n=10/cell</td></tr>
+          <tr><td></td><td>Model</td><td class="num">0.550</td><td class="num">0.580</td><td class="sig-no">no</td></tr>
+          <tr><td></td><td>Mode</td><td class="num">0.010</td><td class="num">0.921</td><td class="sig-no">no</td></tr>
+          <tr><td></td><td>Model &times; Mode</td><td class="num">0.058</td><td class="num">0.943</td><td class="sig-no">no</td></tr>
+
+          <tr class="dim-row"><td colspan="5">3. Security &mdash; BE1, DB1 only, n=2/cell</td></tr>
+          <tr><td colspan="5" style="color:var(--muted);font-style:italic;">Not computable &mdash; zero variance (12/12 pass). F is mathematically undefined, not "non-significant."</td></tr>
+
+          <tr class="dim-row"><td colspan="5">4. Usability &mdash; FE1, FE2, INT1 only, n=3/cell</td></tr>
+          <tr><td></td><td>Model</td><td class="num">3.889</td><td class="num">0.0499</td><td class="sig-yes">YES*</td></tr>
+          <tr><td></td><td>Mode</td><td class="num">0.089</td><td class="num">0.771</td><td class="sig-no">no</td></tr>
+          <tr><td></td><td>Model &times; Mode</td><td class="num">0.556</td><td class="num">0.588</td><td class="sig-no">no</td></tr>
+
+          <tr class="dim-row"><td colspan="5">5. Consistency &mdash; one-way, model only</td></tr>
+          <tr><td>INT1</td><td>Model</td><td class="num">4.179</td><td class="num">0.073</td><td class="sig-no">no</td></tr>
+          <tr><td>INT2</td><td>Model</td><td class="num">14.837</td><td class="num">0.0048</td><td class="sig-yes">YES</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="caveat"><b>*</b> Usability's significance crossed p&lt;.05 by a razor-thin margin (0.0547 &rarr; 0.0499 when FE2 was added) at n=3/cell &mdash; still below the study's own 5/cell power threshold. Treat as suggestive, not confirmatory. Consistency's one-way tests also violate independence (the 3 pairwise NED values per model share underlying generations) &mdash; read as descriptive effect size, not a clean hypothesis test.</p>
+  </section>
+
+  <footer class="note">
+    <p>Source: <code>results-baseline-full.jsonl</code>, <code>results-agentic-full.jsonl</code>, <code>consistency-int1.json</code>, <code>consistency-int2.json</code>, <code>anova-results.txt</code>.</p>
+    <p>FE1 and PY1 fail for all 3 models in both modes across every run this project has done. FE2 fails for gpt/claude on a wrong import-path guess (confirmed via actual test output, not inferred) &mdash; gemini converges. All other 7 tasks converge for every model.</p>
+  </footer>
+
+</div>
+
+<script>
+const DATA = [
+  {"task_id":"FE1","model":"gpt","single_pass":false,"single_mi":0.0,"single_usability":4.0,"agentic_pass":false,"agentic_mi":15.0,"agentic_usability":7.0,"agentic_turns":3},
+  {"task_id":"FE1","model":"gemini","single_pass":false,"single_mi":0.0,"single_usability":8.0,"agentic_pass":false,"agentic_mi":32.5,"agentic_usability":5.0,"agentic_turns":3},
+  {"task_id":"FE1","model":"claude","single_pass":false,"single_mi":37.5,"single_usability":9.0,"agentic_pass":false,"agentic_mi":52.0,"agentic_usability":8.0,"agentic_turns":3},
+  {"task_id":"BE1","model":"gpt","single_pass":true,"single_mi":50.0,"single_usability":null,"agentic_pass":true,"agentic_mi":15.0,"agentic_usability":null,"agentic_turns":2},
+  {"task_id":"BE1","model":"gemini","single_pass":true,"single_mi":55.0,"single_usability":null,"agentic_pass":true,"agentic_mi":50.0,"agentic_usability":null,"agentic_turns":1},
+  {"task_id":"BE1","model":"claude","single_pass":true,"single_mi":60.0,"single_usability":null,"agentic_pass":true,"agentic_mi":60.0,"agentic_usability":null,"agentic_turns":1},
+  {"task_id":"PY1","model":"gpt","single_pass":false,"single_mi":53.53,"single_usability":null,"agentic_pass":false,"agentic_mi":37.59,"agentic_usability":null,"agentic_turns":3},
+  {"task_id":"PY1","model":"gemini","single_pass":false,"single_mi":51.3,"single_usability":null,"agentic_pass":false,"agentic_mi":51.55,"agentic_usability":null,"agentic_turns":3},
+  {"task_id":"PY1","model":"claude","single_pass":false,"single_mi":59.68,"single_usability":null,"agentic_pass":false,"agentic_mi":58.43,"agentic_usability":null,"agentic_turns":3},
+  {"task_id":"DB1","model":"gpt","single_pass":true,"single_mi":65.0,"single_usability":null,"agentic_pass":true,"agentic_mi":60.0,"agentic_usability":null,"agentic_turns":1},
+  {"task_id":"DB1","model":"gemini","single_pass":true,"single_mi":63.0,"single_usability":null,"agentic_pass":true,"agentic_mi":65.0,"agentic_usability":null,"agentic_turns":1},
+  {"task_id":"DB1","model":"claude","single_pass":true,"single_mi":64.0,"single_usability":null,"agentic_pass":true,"agentic_mi":63.0,"agentic_usability":null,"agentic_turns":2},
+  {"task_id":"INT1","model":"gpt","single_pass":true,"single_mi":90.0,"single_usability":7.0,"agentic_pass":true,"agentic_mi":88.46,"agentic_usability":8.0,"agentic_turns":1},
+  {"task_id":"INT1","model":"gemini","single_pass":true,"single_mi":90.0,"single_usability":5.0,"agentic_pass":true,"agentic_mi":90.0,"agentic_usability":6.0,"agentic_turns":1},
+  {"task_id":"INT1","model":"claude","single_pass":true,"single_mi":89.17,"single_usability":9.0,"agentic_pass":true,"agentic_mi":90.91,"agentic_usability":9.0,"agentic_turns":1},
+  {"task_id":"BE2","model":"gpt","single_pass":true,"single_mi":51.82,"single_usability":null,"agentic_pass":true,"agentic_mi":67.14,"agentic_usability":null,"agentic_turns":1},
+  {"task_id":"BE2","model":"gemini","single_pass":true,"single_mi":72.31,"single_usability":null,"agentic_pass":true,"agentic_mi":61.67,"agentic_usability":null,"agentic_turns":2},
+  {"task_id":"BE2","model":"claude","single_pass":true,"single_mi":67.5,"single_usability":null,"agentic_pass":true,"agentic_mi":65.83,"agentic_usability":null,"agentic_turns":2},
+  {"task_id":"FE2","model":"gpt","single_pass":false,"single_mi":100.0,"single_usability":6.0,"agentic_pass":false,"agentic_mi":100.0,"agentic_usability":6.0,"agentic_turns":3},
+  {"task_id":"FE2","model":"gemini","single_pass":true,"single_mi":97.5,"single_usability":9.0,"agentic_pass":true,"agentic_mi":99.0,"agentic_usability":10.0,"agentic_turns":2},
+  {"task_id":"FE2","model":"claude","single_pass":false,"single_mi":100.0,"single_usability":9.0,"agentic_pass":false,"agentic_mi":100.0,"agentic_usability":9.0,"agentic_turns":3},
+  {"task_id":"PY2","model":"gpt","single_pass":true,"single_mi":70.62,"single_usability":null,"agentic_pass":true,"agentic_mi":75.4,"agentic_usability":null,"agentic_turns":1},
+  {"task_id":"PY2","model":"gemini","single_pass":true,"single_mi":59.73,"single_usability":null,"agentic_pass":true,"agentic_mi":72.29,"agentic_usability":null,"agentic_turns":1},
+  {"task_id":"PY2","model":"claude","single_pass":true,"single_mi":72.46,"single_usability":null,"agentic_pass":true,"agentic_mi":69.33,"agentic_usability":null,"agentic_turns":1},
+  {"task_id":"DB2","model":"gpt","single_pass":true,"single_mi":81.67,"single_usability":null,"agentic_pass":true,"agentic_mi":81.67,"agentic_usability":null,"agentic_turns":1},
+  {"task_id":"DB2","model":"gemini","single_pass":true,"single_mi":81.67,"single_usability":null,"agentic_pass":true,"agentic_mi":81.67,"agentic_usability":null,"agentic_turns":1},
+  {"task_id":"DB2","model":"claude","single_pass":true,"single_mi":81.67,"single_usability":null,"agentic_pass":true,"agentic_mi":81.67,"agentic_usability":null,"agentic_turns":1},
+  {"task_id":"INT2","model":"gpt","single_pass":true,"single_mi":100.0,"single_usability":null,"agentic_pass":true,"agentic_mi":100.0,"agentic_usability":null,"agentic_turns":1},
+  {"task_id":"INT2","model":"gemini","single_pass":true,"single_mi":100.0,"single_usability":null,"agentic_pass":true,"agentic_mi":100.0,"agentic_usability":null,"agentic_turns":1},
+  {"task_id":"INT2","model":"claude","single_pass":true,"single_mi":100.0,"single_usability":null,"agentic_pass":true,"agentic_mi":100.0,"agentic_usability":null,"agentic_turns":1}
+];
+
+const TASKS = ["FE1","BE1","PY1","DB1","INT1","BE2","FE2","PY2","DB2","INT2"];
+const MODELS = ["gpt","gemini","claude"];
+
+function dot(pass){ return `<span class="dot ${pass ? 'pass' : 'fail'}" title="${pass ? 'pass' : 'fail'}"></span>`; }
+
+const tbody = document.getElementById('results-body');
+TASKS.forEach(task => {
+  const tr = document.createElement('tr');
+  let html = `<td class="task-cell">${task}</td>`;
+  MODELS.forEach(model => {
+    const r = DATA.find(d => d.task_id === task && d.model === model);
+    html += `<td><div class="cell-pair">${dot(r.single_pass)}${dot(r.agentic_pass)}<span class="turns">${r.agentic_turns}t</span></div></td>`;
+  });
+  tr.innerHTML = html;
+  tbody.appendChild(tr);
+});
+
+// --- grouped bar chart helper ---
+function groupedBar(svgId, series, opts) {
+  const svg = document.getElementById(svgId);
+  const W = 420, H = opts.h || 220;
+  const padL = 30, padR = 10, padT = 10, padB = 40;
+  const plotW = W - padL - padR, plotH = H - padT - padB;
+  const max = opts.max;
+  const groups = series; // [{label, bars:[{label,value,color}]}]
+  const groupW = plotW / groups.length;
+  const barGap = 4, groupPad = 14;
+  let svgContent = `<line class="axis-line" x1="${padL}" y1="${padT+plotH}" x2="${padL+plotW}" y2="${padT+plotH}"/>`;
+
+  // gridlines
+  const ticks = opts.ticks || 4;
+  for (let i=0;i<=ticks;i++){
+    const val = max * i/ticks;
+    const y = padT + plotH - (val/max)*plotH;
+    svgContent += `<line x1="${padL}" y1="${y}" x2="${padL+plotW}" y2="${y}" stroke="var(--border)" stroke-width="1"/>`;
+    svgContent += `<text x="${padL-6}" y="${y+3}" text-anchor="end" class="bar-label">${Math.round(val)}</text>`;
+  }
+
+  groups.forEach((g, gi) => {
+    const gx = padL + gi*groupW;
+    const barW = (groupW - groupPad*2 - barGap*(g.bars.length-1)) / g.bars.length;
+    g.bars.forEach((b, bi) => {
+      const bx = gx + groupPad + bi*(barW+barGap);
+      const bh = (b.value/max)*plotH;
+      const by = padT + plotH - bh;
+      svgContent += `<rect x="${bx}" y="${by}" width="${barW}" height="${Math.max(bh,1)}" rx="3" fill="${b.color}"><title>${g.label} / ${b.label}: ${b.value}</title></rect>`;
+      svgContent += `<text x="${bx+barW/2}" y="${by-4}" text-anchor="middle" class="bar-value" font-size="10">${b.value}</text>`;
+    });
+    svgContent += `<text x="${gx+groupW/2}" y="${padT+plotH+16}" text-anchor="middle" class="bar-label">${g.label}</text>`;
+  });
+
+  svg.innerHTML = svgContent;
+}
+
+const modelColor = {gpt:'var(--gpt)', gemini:'var(--gemini)', claude:'var(--claude)'};
+
+groupedBar('chart-mi', [
+  {label:'single', bars:[
+    {label:'gpt', value:66.3, color:modelColor.gpt},
+    {label:'gemini', value:67.1, color:modelColor.gemini},
+    {label:'claude', value:73.2, color:modelColor.claude},
+  ]},
+  {label:'agentic', bars:[
+    {label:'gpt', value:64.0, color:modelColor.gpt},
+    {label:'gemini', value:70.4, color:modelColor.gemini},
+    {label:'claude', value:74.1, color:modelColor.claude},
+  ]},
+], {max:100});
+
+groupedBar('chart-us', [
+  {label:'single', bars:[
+    {label:'gpt', value:5.7, color:modelColor.gpt},
+    {label:'gemini', value:7.3, color:modelColor.gemini},
+    {label:'claude', value:9.0, color:modelColor.claude},
+  ]},
+  {label:'agentic', bars:[
+    {label:'gpt', value:7.0, color:modelColor.gpt},
+    {label:'gemini', value:7.0, color:modelColor.gemini},
+    {label:'claude', value:8.7, color:modelColor.claude},
+  ]},
+], {max:10, ticks:5});
+
+groupedBar('chart-ned1', [
+  {label:'', bars:[
+    {label:'gpt', value:0.166, color:modelColor.gpt},
+    {label:'gemini', value:0.447, color:modelColor.gemini},
+    {label:'claude', value:0.280, color:modelColor.claude},
+  ]},
+], {max:0.5, h:180, ticks:5});
+
+groupedBar('chart-ned2', [
+  {label:'', bars:[
+    {label:'gpt', value:0.231, color:modelColor.gpt},
+    {label:'gemini', value:0.017, color:modelColor.gemini},
+    {label:'claude', value:0.000, color:modelColor.claude},
+  ]},
+], {max:0.5, h:180, ticks:5});
+</script>
