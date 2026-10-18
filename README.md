@@ -1,6 +1,8 @@
 # LLM Code-Gen Experiment Harness
 
-Compares GPT, Gemini and Claude on real tasks in a production-style codebase (Logix), under two conditions: single-turn generation and agentic self-correction. Scores test pass rate, security findings, maintainability, consistency and usability.
+Compares GPT, Gemini and Claude on real tasks in a production-style codebase ([Logix](https://github.com/bnays/ai-inventory-management-system)), under two conditions: single-turn generation and agentic self-correction. Scores test pass rate, security findings, maintainability, consistency and usability.
+
+**Status:** harness complete; full experiment runs in progress. Results will be added to `results/`.
 
 ## 1. Setup
 
@@ -17,11 +19,9 @@ Clone Logix fresh somewhere dedicated to this — the sandbox creates disposable
 git worktrees from this path per task/model/turn, so it must be a clean repo
 with no uncommitted changes, but it should NOT be your everyday working copy.
 
-## 2. Replace the example tasks
+## 2. Define your tasks
 
-Edit `tasks.json` (or copy it to `tasks.json` and point
-`TASKS_FILE` at it) with your real ~20 tasks: real target files, real test
-commands that exist in your repo, real security scan commands.
+Edit `tasks.json` (or point `TASKS_FILE` at your own file) with the tasks to run: target files, test commands and security scan commands that exist in your repo.
 
 Test every `test_command` and `security_scan_command` manually in a shell
 first, inside a worktree, before trusting the harness to run them —
