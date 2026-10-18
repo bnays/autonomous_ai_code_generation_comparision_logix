@@ -1,8 +1,6 @@
-# LLM Code-Gen Experiment Harness (NIT6002)
+# LLM Code-Gen Experiment Harness
 
-This runs your real single-turn baseline and agentic self-correction comparison
-across GPT / Gemini / Claude on the Logix codebase, replacing the NIT6001 data
-that wasn't from actual runs.
+Compares GPT, Gemini and Claude on real tasks in a production-style codebase (Logix), under two conditions: single-turn generation and agentic self-correction. Scores test pass rate, security findings, maintainability, consistency and usability.
 
 ## 1. Setup
 
@@ -56,19 +54,6 @@ Load the `*-reviewed.jsonl` files (one JSON object per line: task_id,
 model_name, turn, mode, passed_tests, security_findings,
 maintainability_index, usability_score) into pandas/R for your ANOVA and
 comparison tables.
-
-## What's NOT built for you (on purpose)
-
-- **Real task definitions** — only you know what the 20 Logix tasks should be
-- **Consistency (NED) scoring** — run each task 2-3 times per model/mode and
-  compute Normalised Edit Distance between the repeated outputs yourself;
-  the harness logs every attempt so the raw data is there
-- **TS/JS Maintainability Index** — `compute_maintainability_index` only
-  handles Python (via `radon`) right now; add an equivalent for your
-  TypeScript files if MI matters for those tasks
-- **Security scanner output parsing** — the finding-count logic in
-  `scorer.py` is a rough heuristic; switch your scanners to `--json` output
-  and parse it properly once you've confirmed the schema
 
 ## Cost/time note
 
